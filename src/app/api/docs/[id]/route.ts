@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
+  const id = request.nextUrl.pathname.split("/").pop();
   try {
     const node = await prisma.node.findUnique({
       where: {
-        id: params.id,
+        id: id as string,
       },
       include: {
         doc: true,
@@ -51,10 +49,8 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest) {
+  const id = request.nextUrl.pathname.split("/").pop();
   try {
     const body = await request.json()
     const { contentJson, plainText } = body
@@ -71,7 +67,7 @@ export async function PATCH(
 
     // Verify the node exists and is a document
     const node = await prisma.node.findUnique({
-      where: { id: params.id },
+      where: { id: id as string },
       include: { doc: true },
     })
 
@@ -97,7 +93,7 @@ export async function PATCH(
 
     // Update the document
     const updatedDoc = await prisma.document.update({
-      where: { nodeId: params.id },
+      where: { nodeId: id as string },
       data: {
         contentJson: JSON.stringify(contentJson),
         plainText,

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest) {
+  const id = request.nextUrl.pathname.split("/").pop();
   try {
     const body = await request.json()
     const { name } = body
@@ -20,7 +18,7 @@ export async function PATCH(
     }
 
     const node = await prisma.node.update({
-      where: { id: params.id },
+      where: { id: id as string },
       data: {
         name: name.trim(),
       },
@@ -45,14 +43,12 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.pathname.split("/").pop();
   try {
     // Check if the node exists
     const node = await prisma.node.findUnique({
-      where: { id: params.id },
+      where: { id: id as string },
       include: {
         children: true,
       },
@@ -86,12 +82,12 @@ export async function DELETE(
 
     // Delete the node (cascading will handle children and documents)
     await prisma.node.delete({
-      where: { id: params.id },
+      where: { id: id as string },
     })
 
     return NextResponse.json({
       success: true,
-      data: { id: params.id },
+      data: { id },
     })
   } catch (error) {
     console.error('Failed to delete node:', error)

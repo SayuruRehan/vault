@@ -7,32 +7,30 @@ async function wouldCreateCycle(nodeId: string, newParentId: string): Promise<bo
   if (nodeId === newParentId) return true
   
   let currentParentId: string | null = newParentId
-  
+
   while (currentParentId) {
     if (currentParentId === nodeId) return true
-    
-    const parent = await prisma.node.findUnique({
+
+    const parent: { parentId: string | null } | null = await prisma.node.findUnique({
       where: { id: currentParentId },
       select: { parentId: true },
     })
-    
+
     currentParentId = parent?.parentId || null
   }
-  
+
   return false
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest) {
+  const id = request.nextUrl.pathname.split("/").slice(-3, -2)[0];
   try {
     const body = await request.json()
     const { newParentId, beforeNodeId, afterNodeId } = body
 
     // Validate that the node exists
     const node = await prisma.node.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!node) {
@@ -47,7 +45,7 @@ export async function PATCH(
 
     // Check for cycle if moving to a different parent
     if (newParentId && newParentId !== node.parentId) {
-      const cycleDetected = await wouldCreateCycle(params.id, newParentId)
+  const cycleDetected = await wouldCreateCycle(id, newParentId)
       if (cycleDetected) {
         return NextResponse.json(
           {
@@ -85,7 +83,7 @@ export async function PATCH(
 
     // Update the node
     const updatedNode = await prisma.node.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         parentId: targetParentId,
         orderKey: newOrderKey,
